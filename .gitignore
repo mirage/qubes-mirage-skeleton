@@ -5,5 +5,5 @@ key_gen.ml
 main.ml
 main.native
 mir-qubes-test
-qubes-test.xl.in
-qubes-test_libvirt.xml
+qubes-skeleton.xl.in
+qubes-skeleton_libvirt.xml
