@@ -2,9 +2,18 @@
    See the README file for details. *)
 
 open Lwt
+open Qubes
+
+let src = Logs.Src.create "unikernel" ~doc:"Main unikernel code"
+module Log = (val Logs.src_log src : Logs.LOG)
+
+let () = Logs.set_level (Some Logs.Info)
 
 module Main (C: V1_LWT.CONSOLE) (Clock : V1.CLOCK) = struct
-  let wait_for_shutdown (module Log : Qubes.S.LOG) =
+  let log_buf = Buffer.create 100
+  let log_fmt = Format.formatter_of_buffer log_buf
+
+  let wait_for_shutdown () =
     let module Xs = OS.Xs in
     Xs.make () >>= fun xs ->
     Xs.immediate xs (fun h -> Xs.read h "domid") >>= fun domid ->
@@ -15,48 +24,51 @@ module Main (C: V1_LWT.CONSOLE) (Clock : V1.CLOCK) = struct
       | "poweroff" -> return `Poweroff
       | "" -> fail Xs_protocol.Eagain
       | state ->
-          Log.info "Unknown power state %S" state;
+          Log.info "Unknown power state %S" (fun f -> f state);
           fail Xs_protocol.Eagain
     )
 
-  let make_log ~reporter name =
-    let module Log = struct
-      let debug fmt = Printf.ksprintf ignore fmt
-      let info fmt = Printf.ksprintf (reporter name "info") fmt
-      let warn fmt = Printf.ksprintf (reporter name "WARN") fmt
-    end in
-    (module Log : Qubes.S.LOG)
+  let string_of_level =
+    let open Logs in function
+    | App -> "APP"
+    | Error -> "ERR"
+    | Warning -> "WRN"
+    | Info -> "INF"
+    | Debug -> "DBG"
+
+  (* Report a log message on [c]. *)
+  let init_logging c =
+    let report src level k fmt msgf =
+      let now = Clock.time () |> Gmtime.gmtime |> Gmtime.to_string in
+      let lvl = string_of_level level in
+      let k _ =
+        let msg = Buffer.contents log_buf in
+        Buffer.clear log_buf;
+        Lwt.async (fun () -> C.log_s c msg);
+        k () in
+      msgf @@ fun ?header:_ ?tags:_ ->
+      Format.kfprintf k log_fmt ("%s: %s [%s] " ^^ fmt) now lvl (Logs.Src.name src) in
+    Logs.set_reporter { Logs.report }
 
   let start c () =
     let start_time = Clock.time () in
-    (* Initialise logging *)
-    let reporter src lvl msg =
-      let now = Clock.time () |> Gmtime.gmtime |> Gmtime.to_string in
-      Lwt.async (fun () -> C.log_s c (Printf.sprintf "%s: %s [%s] %s" now lvl src msg)) in
-    let (module Log) = make_log ~reporter "main" in
-    let (module RExec_log) = make_log ~reporter "qrexec-agent" in
-    let (module GUI_log) = make_log ~reporter "gui-agent" in
-    let (module DB_log) = make_log ~reporter "qubesDB" in
-    let module RExec = Qubes.RExec.Make(RExec_log) in
-    let module GUI = Qubes.GUI.Make(GUI_log) in
-    let module DB = Qubes.DB.Make(DB_log) in
+    init_logging c;
     (* Start qrexec agent, GUI agent and QubesDB agent in parallel *)
     let qrexec = RExec.connect ~domid:0 () in
     let gui = GUI.connect ~domid:0 () in
     let qubesDB = DB.connect ~domid:0 () in
     (* Wait for clients to connect *)
     qrexec >>= fun qrexec ->
-    let module Cmd = Commands.Make(RExec_log)(RExec.Flow) in
-    let agent_listener = RExec.listen qrexec Cmd.handler in
+    let agent_listener = RExec.listen qrexec Command.handler in
     gui >>= fun _gui ->
     qubesDB >>= fun qubesDB ->
     Log.info "agents connected in %.3f s (CPU time used since boot: %.3f s)"
-      (Clock.time () -. start_time) (Sys.time ());
+      (fun f -> f (Clock.time () -. start_time) (Sys.time ()));
     begin match DB.read qubesDB "/qubes-ip" with
-    | None -> Log.info "No IP address assigned"
-    | Some ip -> Log.info "My IP address is %S" ip end;
+    | None -> Log.info "No IP address assigned" Logs.unit
+    | Some ip -> Log.info "My IP address is %S" (fun f -> f ip) end;
     Lwt.async (fun () ->
-      wait_for_shutdown (module Log) >>= fun `Poweroff ->
+      wait_for_shutdown () >>= fun `Poweroff ->
       RExec.disconnect qrexec
     );
     agent_listener
