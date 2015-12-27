@@ -60,7 +60,8 @@ module Main (C: V1_LWT.CONSOLE) (Clock : V1.CLOCK) = struct
     (* Wait for clients to connect *)
     qrexec >>= fun qrexec ->
     let agent_listener = RExec.listen qrexec Command.handler in
-    gui >>= fun _gui ->
+    gui >>= fun gui ->
+    Lwt.async (fun () -> GUI.listen gui);
     qubesDB >>= fun qubesDB ->
     Log.info "agents connected in %.3f s (CPU time used since boot: %.3f s)"
       (fun f -> f (Clock.time () -. start_time) (Sys.time ()));
