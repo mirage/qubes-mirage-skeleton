@@ -9,18 +9,15 @@ module Log = (val Logs.src_log src : Logs.LOG)
 
 let () = Logs.set_level (Some Logs.Info)
 
-module Main (C: V1_LWT.CONSOLE) (Clock : V1.CLOCK) = struct
+module Main (Clock : V1.CLOCK) = struct
+  module Log_reporter = Mirage_logs.Make(Clock)
   let log_buf = Buffer.create 100
   let log_fmt = Format.formatter_of_buffer log_buf
 
   let wait_for_shutdown () =
-    let module Xs = OS.Xs in
-    Xs.make () >>= fun xs ->
-    Xs.immediate xs (fun h -> Xs.read h "domid") >>= fun domid ->
-    let domid = int_of_string domid in
-    Xs.immediate xs (fun h -> Xs.getdomainpath h domid) >>= fun domainpath ->
-    Xs.wait xs (fun xsh ->
-      Xs.read xsh (domainpath ^ "/control/shutdown") >>= function
+    OS.Xs.make () >>= fun xs ->
+    OS.Xs.wait xs (fun xsh ->
+      OS.Xs.read xsh ("control/shutdown") >>= function
       | "poweroff" -> return `Poweroff
       | "" -> fail Xs_protocol.Eagain
       | state ->
@@ -28,31 +25,9 @@ module Main (C: V1_LWT.CONSOLE) (Clock : V1.CLOCK) = struct
           fail Xs_protocol.Eagain
     )
 
-  let string_of_level =
-    let open Logs in function
-    | App -> "APP"
-    | Error -> "ERR"
-    | Warning -> "WRN"
-    | Info -> "INF"
-    | Debug -> "DBG"
-
-  (* Report a log message on [c]. *)
-  let init_logging c =
-    let report src level k fmt msgf =
-      let now = Clock.time () |> Gmtime.gmtime |> Gmtime.to_string in
-      let lvl = string_of_level level in
-      let k _ =
-        let msg = Buffer.contents log_buf in
-        Buffer.clear log_buf;
-        Lwt.async (fun () -> C.log_s c msg);
-        k () in
-      msgf @@ fun ?header:_ ?tags:_ ->
-      Format.kfprintf k log_fmt ("%s: %s [%s] " ^^ fmt) now lvl (Logs.Src.name src) in
-    Logs.set_reporter { Logs.report }
-
-  let start c () =
+  let start () =
     let start_time = Clock.time () in
-    init_logging c;
+    Log_reporter.init_logging ();
     (* Start qrexec agent, GUI agent and QubesDB agent in parallel *)
     let qrexec = RExec.connect ~domid:0 () in
     let gui = GUI.connect ~domid:0 () in

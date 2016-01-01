@@ -4,7 +4,7 @@ let main =
   foreign
     ~libraries:["mirage-qubes"]
     ~packages:["mirage-qubes"]
-    "Unikernel.Main" (console @-> clock @-> job)
+    "Unikernel.Main" (clock @-> job)
 
 let () =
-  register "qubes-skeleton" [main $ default_console $ default_clock]
+  register "qubes-skeleton" [main $ default_clock]
