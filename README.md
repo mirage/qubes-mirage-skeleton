@@ -7,7 +7,6 @@ It uses the [mirage-qubes][] library to implement the Qubes protocols.
 To build:
 
     $ opam install mirage
-    $ opam pin add mirage-qubes https://github.com/talex5/mirage-qubes.git
     $ mirage configure --xen
     $ make
 
