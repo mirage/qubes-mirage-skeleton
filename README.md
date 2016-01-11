@@ -1,10 +1,10 @@
 # qubes-mirage-skeleton
 
-An experimental unikernel that can run as a QubesOS VM.
+A demonstration unikernel that can run as a QubesOS VM.
 It acts as a qrexec agent, receiving commands sent from dom0.
 It uses the [mirage-qubes][] library to implement the Qubes protocols.
 
-To build:
+To build (ensure you have mirage 2.9.0 or later):
 
     $ opam install mirage
     $ mirage configure --xen

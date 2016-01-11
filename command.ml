@@ -16,7 +16,7 @@ let handler ~user cmd flow =
   (* Write a message to the client and return an exit status of 1. *)
   let error fmt =
     fmt |> Printf.ksprintf @@ fun s ->
-    Log.warn "<< %s" (fun f -> f s);
+    Log.warn (fun f -> f "<< %s" s);
     Flow.ewritef flow "%s [while processing %S]" s cmd >|= fun () -> 1 in
   match cmd with
   | "echo" -> echo ~user flow

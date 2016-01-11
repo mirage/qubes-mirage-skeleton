@@ -4,7 +4,7 @@ let main =
   foreign
     ~libraries:["mirage-qubes"]
     ~packages:["mirage-qubes"]
-    "Unikernel.Main" (clock @-> job)
+    "Unikernel.Main" job
 
 let () =
-  register "qubes-skeleton" [main $ default_clock]
+  register "qubes-skeleton" ~argv:no_argv [main]
