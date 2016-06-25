@@ -4,6 +4,9 @@ A demonstration unikernel that can run as a QubesOS VM.
 It acts as a qrexec agent, receiving commands sent from dom0.
 It uses the [mirage-qubes][] library to implement the Qubes protocols.
 
+The example code queries QubesDB to get the network configuration, resolves "google.com" using its network VM's DNS service and then fetches "http://google.com".
+It also responds provides a qrexec command, which can be invoked from dom0 (or other domains, if you allow it).
+
 To build (ensure you have mirage 2.9.0 or later):
 
     $ opam install mirage
@@ -32,33 +35,52 @@ You can use this with the [test-mirage][] scripts to deploy the unikernel (`mir-
     MirageOS booting...
     Initialising timer interface
     Initialising console ... done.
-    2015-12-01 20:58.51: info [qrexec-agent] waiting for client...
-    2015-12-01 20:58.51: info [gui-agent] waiting for client...
-    2015-12-01 20:58.51: info [qubesDB] connecting to server...
+    gnttab_table mapped at 0000000002001000.
+    Netif: add resume hook
+    Netif.connect 0
+    Netfront.create: id=0 domid=2
+     sg:true gso_tcpv4:false rx_copy:true rx_flip:false smart_poll:false
+    MAC: 00:16:3e:5e:6c:09
+    Attempt to open(/dev/urandom)!
+    Unsupported function getpid called in Mini-OS kernel
+    Unsupported function getppid called in Mini-OS kernel
+    Manager: connect
+    Manager: configuring
+    Manager: Interface to 127.0.0.1 nm 255.255.255.255 gw []
+
+    ARP: sending gratuitous from 127.0.0.1
+    Manager: configuration done
+    2016-06-25 18:30.56: INF [unikernel] Starting
+    2016-06-25 18:30.56: INF [qubes.rexec] waiting for client...
+    2016-06-25 18:30.56: INF [qubes.gui] waiting for client...
+    2016-06-25 18:30.56: INF [qubes.db] connecting to server...
     gnttab_stubs.c: initialised mini-os gntmap
-    2015-12-01 20:58.51: info [qubesDB] connected
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-vm-updateable" = "False"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-vm-type" = "AppVM"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-vm-persistence" = "rw-only"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-usb-devices" = ""
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-timezone" = "Europe/London"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-service/meminfo-writer" = "1"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-secondary-dns" = "10.137.2.254"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-random-seed" = "dqPrqr+0vup8K2WdjyoL+tuR9tq96kgkoZGR8JVP8PjjeJrjNmRkU6kCHDt3ABupRjXoAF9yE4S3qS7EWX1Xwg=="
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-netmask" = "255.255.255.0"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-ip" = "10.137.2.11"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-gateway" = "10.137.2.1"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-debug-mode" = "0"
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-block-devices" = ""
-    2015-12-01 20:58.51: info [qubesDB] "/qubes-base-template" = "fedora-21"
-    2015-12-01 20:58.51: info [qubesDB] "/name" = "mirage-test"
-    2015-12-01 20:58.52: info [qrexec-agent] client connected, using protocol version 2
-    2015-12-01 20:58.52: info [qubesDB] write "/qubes-keyboard" = "xkb_keymap {\n\txkb_keycodes  { include \"evdev+aliases(qwerty)\"\t};\n\txkb_types     { include \"complete\"\t};\n\txkb_compat    { include \"complete\"\t};\n\txkb_symbols   { include \"pc+gb+inet(evdev)\"\t};\n\txkb_geometry  { include \"pc(pc104)\"\t};\n};"
-    2015-12-01 20:58.52: info [gui-agent] client connected (screen size: 6720x2160)
-    2015-12-01 20:58.52: info [main] agents connected in 0.103 s (CPU time used since boot: 0.009 s)
-    2015-12-01 20:58.52: info [main] My IP address is "10.137.2.11"
-    2015-12-01 20:58.52: WARN [qrexec-agent] << Unknown command "QUBESRPC qubes.SetMonitorLayout dom0"
-    2015-12-01 20:58.52: WARN [qrexec-agent] << Unknown command "QUBESRPC qubes.WaitForSession none"
+    2016-06-25 18:30.56: INF [qubes.db] connected
+    2016-06-25 18:30.56: INF [qubes.rexec] client connected, using protocol version 2
+    2016-06-25 18:30.56: INF [qubes.db] got update: "/qubes-keyboard" = "xkb_keymap {\n\txkb_keycodes  { include \"evdev+aliases(qwerty)\"\t};\n\txkb_types     { include \"complete\"\t};\n\txkb_compat    { include \"complete\"\t};\n\txkb_symbols   { include \"pc+gb+inet(evdev)\"\t};\n\txkb_geometry  { include \"pc(pc104)\"\t};\n};"
+    2016-06-25 18:30.56: INF [qubes.gui] client connected (screen size: 6720x2160)
+    2016-06-25 18:30.56: INF [unikernel] agents connected in 0.101 s (CPU time used since boot: 0.027 s)
+    2016-06-25 18:30.56: INF [unikernel] QubesDB "/qubes-ip" = "10.137.3.11"
+    2016-06-25 18:30.56: INF [unikernel] QubesDB "/qubes-netmask" = "255.255.255.0"
+    2016-06-25 18:30.56: INF [unikernel] QubesDB "/qubes-gateway" = "10.137.3.1"
+    ARP: sending gratuitous from 10.137.3.11
+    ARP: sending gratuitous from 127.0.0.1
+    2016-06-25 18:30.56: INF [unikernel] QubesDB "/qubes-primary-dns" = "10.137.3.1"
+    2016-06-25 18:30.56: INF [unikernel] Resolving "google.com"
+    Attempt to open(/dev/urandom)!
+    Unsupported function getpid called in Mini-OS kernel
+    Unsupported function getppid called in Mini-OS kernel
+    ARP: transmitting probe -> 10.137.3.1
+    Note: cannot write Xen 'control' directory
+    ARP: updating 10.137.3.1 -> 00:16:3e:5e:6c:09
+    2016-06-25 18:30.56: INF [unikernel] "google.com" has IPv4 address 216.58.198.110
+    2016-06-25 18:30.56: INF [unikernel] Opening TCP connection to 216.58.198.110:80
+    2016-06-25 18:30.56: WRN [command] << Unknown command "QUBESRPC qubes.SetMonitorLayout dom0"
+    2016-06-25 18:30.56: INF [unikernel] Connected!
+    2016-06-25 18:30.56: WRN [command] << Unknown command "QUBESRPC qubes.WaitForSession none"
+    2016-06-25 18:30.56: INF [unikernel] Received "HTTP/1.0 302 Found\r\nCache-Control: private\r\nContent-Type: text/html; charset=UTF-8\r\nLocation: http://www.google.co.uk/?gfe_rd=cr&ei=4s1uV_XdAYvW8AfCwKv4AQ\r\nContent-Length: 261\r\nDate: Sat, 25 Jun 2016 18:30:58 GMT\r\n\r\n<HTML><HEAD><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<TITLE>302 Moved</TITLE></HEAD><BODY>\n<H1>302 Moved</H1>\nThe document has moved\n<A HREF=\"http://www.google.co.uk/?gfe_rd=cr&amp;ei=4s1uV_XdAYvW8AfCwKv4AQ\">here</A>.\r\n</BODY></HTML>\r\n"
+    2016-06-25 18:30.56: INF [unikernel] Closing TCP connection
+    2016-06-25 18:30.56: INF [unikernel] Network test done. Waiting for qrexec commands...
 
 You can invoke commands from dom0. e.g.
 
@@ -70,7 +92,7 @@ You can invoke commands from dom0. e.g.
 
 # LICENSE
 
-Copyright (c) 2015, Thomas Leonard
+Copyright (c) 2016, Thomas Leonard
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
