@@ -1,22 +1,16 @@
 open Mirage
 
 let main =
+  let packages = [package "mirage-qubes"; package "dns" ~sublibs:["mirage"]; package "tcpip" ~sublibs:["ethif"; "arpv4"; "ipv4"; "icmpv4"; "udp"; "tcp"; "stack-direct"]] in
   foreign
-    ~libraries:["mirage-qubes"; "dns.mirage"]
-    ~packages:["mirage-qubes"; "dns"]
-    "Unikernel.Main" (stackv4 @-> job)
+    ~packages
+    "Unikernel.Main" (random @-> time @-> mclock @-> network @-> ethernet @-> arpv4 @-> job)
 
-(* These are dummy values; we'll read the real settings from QubesDB at start-up *)
-let ip_config = {
-  address = Ipaddr.V4.of_string_exn "127.0.0.1";
-  netmask = Ipaddr.V4.of_string_exn "255.255.255.255";
-  gateways = [];
-}
+ let net = default_network
 
-let stack = direct_stackv4_with_static_ipv4
-    default_console
-    (netif "0")
-    ip_config
+ let eth = etif net
+
+ let arp = arp eth
 
 let () =
-  register "qubes-skeleton" ~argv:no_argv [main $ stack]
+  register "qubes-skeleton" ~argv:no_argv [main $ default_random $ default_time $ default_monotonic_clock $ net $ eth $ arp]

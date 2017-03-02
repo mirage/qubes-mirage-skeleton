@@ -7,10 +7,10 @@ It uses the [mirage-qubes][] library to implement the Qubes protocols.
 The example code queries QubesDB to get the network configuration, resolves "google.com" using its network VM's DNS service and then fetches "http://google.com".
 It also responds provides a qrexec command, which can be invoked from dom0 (or other domains, if you allow it).
 
-To build (ensure you have mirage 2.9.0 or later):
+To build (ensure you have mirage 3.0.0 or later):
 
     $ opam install mirage
-    $ mirage configure --xen
+    $ mirage configure -t xen
     $ make
 
 You can use this with the [test-mirage][] scripts to deploy the unikernel (`mir-qubes-skeleton.xen`) from your development AppVM. e.g.
