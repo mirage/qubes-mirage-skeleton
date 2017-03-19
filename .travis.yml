@@ -1,0 +1,7 @@
+language: c
+install: wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-mirage.sh
+script: bash -ex .travis-mirage.sh
+sudo: required
+dist: trusty
+env:
+  - FORK_USER=talex5 FORK_BRANCH=unikernel OCAML_VERSION=4.04 MIRAGE_BACKEND=xen
