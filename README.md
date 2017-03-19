@@ -1,23 +1,27 @@
 # qubes-mirage-skeleton
 
-A demonstration unikernel that can run as a QubesOS VM.
+A demonstration unikernel that can run as a QubesOS VM. 
 It acts as a qrexec agent, receiving commands sent from dom0.
 It uses the [mirage-qubes][] library to implement the Qubes protocols.
+
+Note: since the release of mirage 3.0 a lot of the explicit setup done in this codebase is
+done automatically by `mirage configure -t qubes`. This repo remains for educational purposes.
 
 The example code queries QubesDB to get the network configuration, resolves "google.com" using its network VM's DNS service and then fetches "http://google.com".
 It also responds provides a qrexec command, which can be invoked from dom0 (or other domains, if you allow it).
 
-To build (ensure you have mirage 2.9.0 or later):
+To build (ensure you have mirage 3.0.0 or later):
 
     $ opam install mirage
-    $ mirage configure --xen
+    # NB: We specifically target xen to show explicitly the QubesOS setup independently from the mirage automatic configuration
+    $ mirage configure -t xen   
     $ make
 
-You can use this with the [test-mirage][] scripts to deploy the unikernel (`mir-qubes-skeleton.xen`) from your development AppVM. e.g.
+You can use this with the [test-mirage][] scripts to deploy the unikernel (`qubes_skeleton.xen`) from your development AppVM. e.g.
 
-    $ test-mirage mir-qubes-skeleton.xen mirage-test
+    $ test-mirage qubes_skeleton.xen mirage-test
     Waiting for 'Ready'... OK
-    Uploading 'mir-qubes-skeleton.xen' (4422320 bytes) to "mirage-test"
+    Uploading 'qubes_skeleton.xen' (4422320 bytes) to "mirage-test"
     Waiting for 'Booting'... OK
     --> Creating volatile image: /var/lib/qubes/appvms/mirage-test/volatile.img...
     --> Loading the VM (type = AppVM)...
