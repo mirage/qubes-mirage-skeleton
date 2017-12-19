@@ -3,7 +3,8 @@ open Mirage
 let main =
   let packages = [
     package "mirage-qubes";
-    package "dns" ~sublibs:["mirage"];
+    package "dns";
+    package "mirage-dns";
   ] in
   foreign
     ~packages
