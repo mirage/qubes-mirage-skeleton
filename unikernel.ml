@@ -54,12 +54,12 @@ module Main
     match first_v4 addresses with
     | None -> failwith "google.com didn't resolve!"
     | Some google ->
-    Log.info (fun f -> f "%S has IPv4 address %a" test_host Ipaddr.V4.pp_hum google);
+    Log.info (fun f -> f "%S has IPv4 address %a" test_host Ipaddr.V4.pp google);
     let tcp = Stack.tcpv4 stack in
     let port = 80 in
-    Log.info (fun f -> f "Opening TCP connection to %a:%d" Ipaddr.V4.pp_hum google port);
+    Log.info (fun f -> f "Opening TCP connection to %a:%d" Ipaddr.V4.pp google port);
     Stack.TCPV4.create_connection tcp (google, port) >>= function
-    | Error err -> failwith (Format.asprintf "Failed to connect to %a:%d:%a" Ipaddr.V4.pp_hum google port Stack.TCPV4.pp_error err)
+    | Error err -> failwith (Format.asprintf "Failed to connect to %a:%d:%a" Ipaddr.V4.pp google port Stack.TCPV4.pp_error err)
     | Ok conn ->
     Log.info (fun f -> f "Connected!");
     Stack.TCPV4.write conn (Cstruct.of_string "GET / HTTP/1.0\r\n\r\n") >>= function
