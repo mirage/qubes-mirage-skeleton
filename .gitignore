@@ -3,7 +3,13 @@ _build/
 log
 key_gen.ml
 main.ml
-main.native
-mir-qubes-test
-qubes-skeleton.xl.in
-qubes-skeleton_libvirt.xml
+qubes_skeleton.xl.in
+qubes_skeleton_libvirt.xml
+.merlin
+dune
+dune-project
+dune.build
+dune.config
+mirage-unikernel-qubes_skeleton-xen.opam
+.mirage.config
+myocamlbuild.ml

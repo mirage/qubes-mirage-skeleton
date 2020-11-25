@@ -10,11 +10,12 @@ done automatically by `mirage configure -t qubes`. This repo remains for educati
 The example code queries QubesDB to get the network configuration, resolves "google.com" using its network VM's DNS service and then fetches "http://google.com".
 It also responds provides a qrexec command, which can be invoked from dom0 (or other domains, if you allow it).
 
-To build (ensure you have mirage 3.0.0 or later):
+To build (ensure you have mirage 3.9.0 or later):
 
     $ opam install mirage
     # NB: We specifically target xen to show explicitly the QubesOS setup independently from the mirage automatic configuration
     $ mirage configure -t xen   
+    $ make depend
     $ make
 
 You can use this with the [test-mirage][] scripts to deploy the unikernel (`qubes_skeleton.xen`) from your development AppVM. e.g.
@@ -96,7 +97,7 @@ You can invoke commands from dom0. e.g.
 
 # LICENSE
 
-Copyright (c) 2016, Thomas Leonard
+Copyright (c) 2020, Thomas Leonard
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -109,4 +110,4 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 gg
 
 [test-mirage]: https://github.com/talex5/qubes-test-mirage
-[mirage-qubes]: https://github.com/talex5/mirage-qubes
+[mirage-qubes]: https://github.com/mirage/mirage-qubes

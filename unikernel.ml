@@ -2,7 +2,6 @@
    See the README file for details. *)
 
 open Lwt
-open Qubes
 
 let src = Logs.Src.create "unikernel" ~doc:"Main unikernel code"
 module Log = (val Logs.src_log src : Logs.LOG)
@@ -16,12 +15,14 @@ let rec first_v4 = function
     | Some ipv4 -> Some ipv4
 
 module Main
+    (Random : Mirage_random.S)
     (DB : Qubes.S.DB)
-    (Stack : Mirage_stack_lwt.V4)
-    (Time : Mirage_time_lwt.S) = struct
+    (Stack : Mirage_stack.V4)
+    (Time : Mirage_time.S)
+    (Clock : Mirage_clock.MCLOCK) = struct
 
   (* Initialise DNS resolver *)
-  module Resolver = Dns_resolver_mirage.Make(Time)(Stack)
+  module Resolver = Dns_client_mirage.Make(Random)(Time)(Clock)(Stack)
 
   let get_required qubesDB key =
     match DB.read qubesDB key with
@@ -30,31 +31,29 @@ module Main
       Log.info (fun f -> f "QubesDB %S = %S" key v);
       v
 
-  let start qubesDB stack _time =
+  let start _random qubesDB stack _time _clock =
     Log.info (fun f -> f "Starting");
     (* Start qrexec agent and GUI agent in parallel *)
-    let qrexec = RExec.connect ~domid:0 () in
-    let gui = GUI.connect ~domid:0 () in
+    let qrexec = Qubes.RExec.connect ~domid:0 () in
+    let gui = Qubes.GUI.connect ~domid:0 () in
     (* Wait for clients to connect *)
     qrexec >>= fun qrexec ->
-    let agent_listener = RExec.listen qrexec Command.handler in
+    let agent_listener = Qubes.RExec.listen qrexec Command.handler in
     gui >>= fun gui ->
-    Lwt.async (fun () -> GUI.listen gui);
+    Lwt.async (fun () -> Qubes.GUI.listen gui ());
     Lwt.async (fun () ->
       OS.Lifecycle.await_shutdown_request () >>= fun (`Poweroff | `Reboot) ->
-      RExec.disconnect qrexec
+      Qubes.RExec.disconnect qrexec
     );
-    let resolver = Resolver.create stack in
-    let dns = get_required qubesDB "/qubes-primary-dns" |> Ipaddr.V4.of_string_exn in
-
+    let nameserver_ip = get_required qubesDB "/qubes-primary-dns" |> Ipaddr.V4.of_string_exn in
+    let resolver = Resolver.create stack ~nameserver:(`UDP, (nameserver_ip, 53)) in
     (* Test by downloading http://google.com *)
-    let test_host = "google.com" in
-    Log.info (fun f -> f "Resolving %S" test_host);
-    Resolver.gethostbyname resolver ~server:dns test_host >>= fun addresses ->
-    match first_v4 addresses with
-    | None -> failwith "google.com didn't resolve!"
-    | Some google ->
-    Log.info (fun f -> f "%S has IPv4 address %a" test_host Ipaddr.V4.pp google);
+    let test_host = Domain_name.of_string_exn "google.com" |> Domain_name.host_exn in
+    Log.info (fun f -> f "Resolving %a" Domain_name.pp test_host);
+    Resolver.gethostbyname resolver test_host >>= function
+    | Error (`Msg msg) -> Fmt.failwith "google.com didn't resolve: %s" msg
+    | Ok google ->
+    Log.info (fun f -> f "%a has IPv4 address %a" Domain_name.pp test_host Ipaddr.V4.pp google);
     let tcp = Stack.tcpv4 stack in
     let port = 80 in
     Log.info (fun f -> f "Opening TCP connection to %a:%d" Ipaddr.V4.pp google port);

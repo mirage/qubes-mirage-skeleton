@@ -1,3 +1,0 @@
-S .
-B _build
-PKG vchan.xen lwt mirage logs tcpip.arpv4 dns.mirage mirage-qubes mirage-stack-lwt
